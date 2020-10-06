@@ -23,18 +23,18 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die;
-define('BLOCKS_tb_a_courses_SHOWCATEGORIES_NONE', '0');
-define('BLOCKS_tb_a_courses_SHOWCATEGORIES_ONLY_PARENT_NAME', '1');
-define('BLOCKS_tb_a_courses_SHOWCATEGORIES_FULL_PATH', '2');
-define('BLOCKS_tb_a_courses_IMAGEASBACKGROUND_FALSE', '0');
-define('BLOCKS_tb_a_courses_SHOWGRADES_NO', '0');
-define('BLOCKS_tb_a_courses_SHOWGRADES_YES', '1');
-define('BLOCKS_tb_a_courses_STARTGRID_NO', '0');
-define('BLOCKS_tb_a_courses_STARTGRID_YES', '1');
-define('BLOCKS_tb_a_courses_DEFAULT_COURSES_ROW', '4');
-define('BLOCKS_tb_a_courses_DEFAULT_COL_SIZE', '3');
-define('BLOCKS_tb_a_courses_SHOWTEACHERS_NO', '0');
-define('BLOCKS_tb_a_courses_SHOWTEACHERS_YES', '1');
+define('BLOCKS_TB_A_COURSES_SHOWCATEGORIES_NONE', '0');
+define('BLOCKS_TB_A_COURSES_SHOWCATEGORIES_ONLY_PARENT_NAME', '1');
+define('BLOCKS_TB_A_COURSES_SHOWCATEGORIES_FULL_PATH', '2');
+define('BLOCKS_TB_A_COURSES_IMAGEASBACKGROUND_FALSE', '0');
+define('BLOCKS_TB_A_COURSES_SHOWGRADES_NO', '0');
+define('BLOCKS_TB_A_COURSES_SHOWGRADES_YES', '1');
+define('BLOCKS_TB_A_COURSES_STARTGRID_NO', '0');
+define('BLOCKS_TB_A_COURSES_STARTGRID_YES', '1');
+define('BLOCKS_TB_A_COURSES_DEFAULT_COURSES_ROW', '4');
+define('BLOCKS_TB_A_COURSES_DEFAULT_COL_SIZE', '3');
+define('BLOCKS_TB_A_COURSES_SHOWTEACHERS_NO', '0');
+define('BLOCKS_TB_A_COURSES_SHOWTEACHERS_YES', '1');
 require_once($CFG->libdir . '/completionlib.php');
 use core_completion\progress;
 /**
@@ -173,33 +173,34 @@ function block_tb_a_courses_get_max_user_courses($showallcourses = false) {
  * Return sorted list of user courses
  *
  * @param bool $showallcourses if set true all courses will be visible.
+ * @param int $categoryid set which category courses to show.
  * @return array list of sorted courses and count of courses.
  */
 function block_tb_a_courses_get_sorted_courses($showallcourses = false, $categoryid = 1) {
     global $USER;
     global $DB;
 
-    $category_this_path = '/' . $categoryid . '/';
+    $categorythispath = '/' . $categoryid . '/';
 
     $limit = block_tb_a_courses_get_max_user_courses($showallcourses);
 
     $allcourses = get_courses();
 
-    $enrolled_courses = enrol_get_my_courses();
+    $enrolledcourses = enrol_get_my_courses();
 
     $courses = array();
 
-    foreach ($allcourses as $courseid => $course_all) {
-        $category = $DB->get_record('course_categories', array('id' => $course_all->category));
+    foreach ($allcourses as $courseid => $courseall) {
+        $category = $DB->get_record('course_categories', array('id' => $courseall->category));
         $path = trim($category->path) . '/';
 
         if ($categoryid == 0) {
-            if (!array_key_exists($courseid, $enrolled_courses)) {
-                $courses[$courseid] = $course_all;
+            if (!array_key_exists($courseid, $enrolledcourses)) {
+                $courses[$courseid] = $courseall;
             }
         } else {
-            if (!array_key_exists($courseid, $enrolled_courses) && (strpos($path, $category_this_path) !== false)) {
-                $courses[$courseid] = $course_all;
+            if (!array_key_exists($courseid, $enrolledcourses) && (strpos($path, $categorythispath) !== false)) {
+                $courses[$courseid] = $courseall;
             }
         }
     }
@@ -223,7 +224,7 @@ function block_tb_a_courses_get_sorted_courses($showallcourses = false, $categor
     if (is_enabled_auth('mnet')) {
         $remotecourses = get_my_remotecourses();
         // Remote courses will have -ve remoteid as key, so it can be differentiated from normal courses.
-        foreach ($remotecourses as $id => $val) {
+        foreach ($remotecourses as $val) {
             $remoteid = $val->remoteid * -1;
             $val->id = $remoteid;
             $courses[$remoteid] = $val;
@@ -235,7 +236,7 @@ function block_tb_a_courses_get_sorted_courses($showallcourses = false, $categor
     $sortedcourses = array();
     $counter = 0;
     // Get courses in sort order into list.
-    foreach ($order as $key => $cid) {
+    foreach ($order as $cid) {
         if (($counter >= $limit) && ($limit != 0)) {
             break;
         }

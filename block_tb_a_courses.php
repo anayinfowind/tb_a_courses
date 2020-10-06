@@ -44,12 +44,11 @@ class block_tb_a_courses extends block_base {
         $this->title = get_string('pluginname', 'block_tb_a_courses');
     }
 
-    function instance_allow_config() {
-        return true;
-    }
-
+    /**
+     * Allow Multiple Instance
+     */
     public function instance_allow_multiple() {
-        return true;
+        return false;
     }
 
     /**
@@ -118,7 +117,7 @@ class block_tb_a_courses extends block_base {
         } else {
             // For each course, build category cache.
             $this->content->text .= $renderer->tb_a_courses($sortedcourses);
-            //$this->content->text .= $renderer->hidden_courses($totalcourses - count($sortedcourses));
+            
         }
 
         return $this->content;
@@ -151,9 +150,5 @@ class block_tb_a_courses extends block_base {
         // Hide header if welcome area is show.
         $config = get_config('block_tb_a_courses');
         return !empty($config->showwelcomearea);
-    }
-
-    public function specialization() {
-        $this->title = get_string('displayname', 'block_tb_a_courses');
     }
 }

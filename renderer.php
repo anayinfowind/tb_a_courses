@@ -39,10 +39,10 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
      * @return string html to be displayed in tb_a_courses block
      */
     public function tb_a_courses($courses) {
-        global $CFG, $PAGE, $DB, $OUTPUT;
+        global $CFG, $DB;
         $html = '';
         // LearningWorks.
-        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/blocks/tb_a_courses/js/custom.js'));
+        $this->PAGE->requires->js(new moodle_url($CFG->wwwroot . '/blocks/tb_a_courses/js/custom.js'));
         $config = get_config('block_tb_a_courses');
         $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
         $ismovingcourse = false;
@@ -140,7 +140,7 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
                 foreach ($teachers as $key => $teacher) {
                     $teachername = get_string('defaultcourseteacher') . ': ' . fullname($teacher);
                     $teachernames .= html_writer::tag('p', $teachername, array('class' => 'teacher_name'));
-                    $teacherimages .= html_writer::div($OUTPUT->user_picture($teacher, array('size' => 50, 'class' => '')), 'teacher_image');
+                    $teacherimages .= html_writer::div($this->output->user_picture($teacher, array('size' => 50, 'class' => '')), 'teacher_image');
                 }
             }
             $teacherimages .= html_writer::end_div();

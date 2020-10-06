@@ -117,7 +117,6 @@ class block_tb_a_courses extends block_base {
         } else {
             // For each course, build category cache.
             $this->content->text .= $renderer->tb_a_courses($sortedcourses);
-            
         }
 
         return $this->content;

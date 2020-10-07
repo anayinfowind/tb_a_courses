@@ -36,14 +36,14 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
      * Construct contents of tb_a_courses block
      *
      * @param array $courses list of courses in sorted order
+     * @param stdClass|stdObject $config settings from Leeloo
      * @return string html to be displayed in tb_a_courses block
      */
-    public function tb_a_courses($courses) {
+    public function tb_a_courses($courses, $config) {
         global $CFG, $DB;
         $html = '';
         // LearningWorks.
-        $this->PAGE->requires->js(new moodle_url($CFG->wwwroot . '/blocks/tb_a_courses/js/custom.js'));
-        $config = get_config('block_tb_a_courses');
+        $this->page->requires->js(new moodle_url($CFG->wwwroot . '/blocks/tb_a_courses/js/custom.js'));
         $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
         $ismovingcourse = false;
         $courseordernumber = 0;
@@ -93,12 +93,12 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
         $gridsplit = intval(12 / count($courses)); // Added intval to avoid any float.
 
         // Set a minimum size for the course 'cards'.
-        $colsize = intval($config->coursegridwidth) > 0 ? intval($config->coursegridwidth) : BLOCKS_tb_a_courses_DEFAULT_COL_SIZE;
+        $colsize = intval($config->available_coursegridwidth) > 0 ? intval($config->available_coursegridwidth) : BLOCKS_TB_A_COURSES_DEFAULT_COL_SIZE;
         if ($gridsplit < $colsize) {
             $gridsplit = $colsize;
         }
 
-        $courseclass = $config->startgrid == BLOCKS_tb_a_courses_STARTGRID_YES ? "grid" : "list";
+        $courseclass = $config->available_startgrid == BLOCKS_TB_A_COURSES_STARTGRID_YES ? "grid" : "list";
         $startvalue = $courseclass == "list" ? "12" : $gridsplit;
 
         $listonly = false;
@@ -130,11 +130,11 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
             $html .= $this->output->box_start(
                 "coursebox $courseclass span$startvalue col-md-$startvalue $courseclass col-xs-12",
                 "course-{$course->id}");
-            $html .= $this->course_image($course);
+            $html .= $this->course_image($course, $config);
 
             $teacherimages = html_writer::start_div('teacher_image_wrap');
             $teachernames = '';
-            if ($course->id > 0 && !empty($role) && $config->showteachers != BLOCKS_tb_a_courses_SHOWTEACHERS_NO) {
+            if ($course->id > 0 && !empty($role) && $config->available_showteachers != BLOCKS_TB_A_COURSES_SHOWTEACHERS_NO) {
                 $context = context_course::instance($course->id);
                 $teachers = get_role_users($role->id, $context, false, $fields);
                 foreach ($teachers as $key => $teacher) {
@@ -187,7 +187,7 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
             $html .= $this->output->box('', 'flush');
             $html .= html_writer::end_tag('div');
 
-            if (!empty($config->showchildren) && ($course->id > 0)) {
+            if (!empty($config->available_showchildren) && ($course->id > 0)) {
                 // List children here.
                 if ($children = block_tb_a_courses_get_child_shortnames($course->id)) {
                     $html .= html_writer::tag('span', $children, array('class' => 'coursechildren'));
@@ -195,19 +195,19 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
             }
 
             if ($course->id > 0) {
-                $html .= $this->course_description($course);
+                $html .= $this->course_description($course, $config);
 
-                $html .= block_tb_a_courses_build_progress($course);
+                $html .= block_tb_a_courses_build_progress($course, $config);
 
                 $html .= html_writer::div($teachernames, 'teacher_names');
             }
 
-            if ($config->showcategories != BLOCKS_tb_a_courses_SHOWCATEGORIES_NONE) {
+            if ($config->available_showcategories != BLOCKS_TB_A_COURSES_SHOWCATEGORIES_NONE) {
                 // List category parent or categories path here.
                 $currentcategory = core_course_category::get($course->category, IGNORE_MISSING);
                 if ($currentcategory !== null) {
                     $html .= html_writer::start_tag('div', array('class' => 'categorypath'));
-                    if ($config->showcategories == BLOCKS_tb_a_courses_SHOWCATEGORIES_FULL_PATH) {
+                    if ($config->available_showcategories == BLOCKS_TB_A_COURSES_SHOWCATEGORIES_FULL_PATH) {
                         foreach ($currentcategory->get_parents() as $categoryid) {
                             $category = core_course_category::get($categoryid, IGNORE_MISSING);
                             if ($category !== null) {
@@ -297,35 +297,6 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
         $select = new single_select($url, 'mynumber', $options, block_tb_a_courses_get_max_user_courses(), array());
         $select->set_label(get_string('numtodisplay', 'block_tb_a_courses'));
         $output .= $this->output->render($select);
-
-        $output .= $this->output->box_end();
-        return $output;
-    }
-
-    /**
-     * Show hidden courses count
-     *
-     * @param int $total count of hidden courses
-     * @return string html
-     */
-    public function hidden_courses($total) {
-        if ($total <= 0) {
-            return;
-        }
-        $output = $this->output->box_start('notice');
-        $plural = $total > 1 ? 'plural' : '';
-        $config = get_config('block_tb_a_courses');
-        // Show view all course link to user if forcedefaultmaxcourses is not empty.
-        if (!empty($config->forcedefaultmaxcourses)) {
-            $output .= get_string('hiddencoursecount' . $plural, 'block_tb_a_courses', $total);
-        } else {
-            $a = new stdClass();
-            $a->coursecount = $total;
-            $a->showalllink = html_writer::link(new moodle_url('/my/index.php',
-                array('mynumber' => block_tb_a_courses::SHOW_ALL_COURSES)),
-                get_string('showallcourses'));
-            $output .= get_string('hiddencoursecountwithshowall' . $plural, 'block_tb_a_courses', $a);
-        }
 
         $output .= $this->output->box_end();
         return $output;
@@ -441,9 +412,10 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
      * Get the image for a course if it exists
      *
      * @param object $course The course whose image we want
+     * @param object $config Config from Leeloo
      * @return string|void
      */
-    public function course_image($course) {
+    public function course_image($course, $config) {
         global $CFG;
 
         $course = new core_course_list_element($course);
@@ -455,9 +427,8 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
                     '/' . $file->get_contextid() . '/' . $file->get_component() . '/' .
                     $file->get_filearea() . $file->get_filepath() . $file->get_filename(), !$isimage);
                 if ($isimage) {
-                    $config = get_config('block_tb_a_courses');
-                    if (is_null($config->tb_a_courses_bgimage) ||
-                        $config->tb_a_courses_bgimage == BLOCKS_tb_a_courses_IMAGEASBACKGROUND_FALSE) {
+                    if (is_null($config->available_tb_a_courses_bgimage) ||
+                        $config->available_tb_a_courses_bgimage == BLOCKS_TB_A_COURSES_IMAGEASBACKGROUND_FALSE) {
                         // Embed the image url as a img tag sweet...
                         $image = html_writer::empty_tag('img', array('src' => $url, 'class' => 'course_image'));
                         return html_writer::div($image, 'image_wrap');
@@ -467,12 +438,12 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
                             array("style" => 'background-image:url(' . $url . '); background-size:cover'));
                     }
                 } else {
-                    return $this->course_image_defaults();
+                    return $this->course_image_defaults($config);
                 }
             }
         } else {
             // Lets try to find some default images eh?.
-            return $this->course_image_defaults();
+            return $this->course_image_defaults($config);
         }
         // Where are the default at even?.
         return print_error('error');
@@ -483,9 +454,7 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
      *
      * @return string|void
      */
-    public function course_image_defaults() {
-
-        $config = get_config('block_tb_a_courses');
+    public function course_image_defaults($config) {
 
         if (method_exists($this->output, 'image_url')) {
             // Use the new method.
@@ -494,16 +463,16 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
             // Still a pre Moodle 3.3 release. Use pix_url because image_url doesn't exist yet.
             $default = $this->output->pix_url('default', 'block_tb_a_courses');
         }
-        if ($courseimagedefault = get_config('block_tb_a_courses', 'courseimagedefault')) {
+        if ($courseimagedefault = $config->available_courseimagedefault) {
             // Return an img element with the image in the block settings to use for the course.
-            $imageurl = block_tb_a_courses_get_course_image_url($courseimagedefault);
+            $imageurl = $courseimagedefault;
         } else {
             // We check for a default image in the tb_a_courses pix folder named default aka our final hope.
             $imageurl = $default;
         }
 
         // Do we need a CSS soloution or is a img good enough?.
-        if (is_null($config->tb_a_courses_bgimage) || $config->tb_a_courses_bgimage == BLOCKS_tb_a_courses_IMAGEASBACKGROUND_FALSE) {
+        if (is_null($config->available_tb_a_courses_bgimage) || $config->available_tb_a_courses_bgimage == BLOCKS_TB_A_COURSES_IMAGEASBACKGROUND_FALSE) {
             // Embed the image url as a img tag sweet...
             $image = html_writer::empty_tag('img', array('src' => $imageurl, 'class' => 'course_image'));
             return html_writer::div($image, 'image_wrap');
@@ -520,15 +489,21 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
      * Get the Course description for a given course
      *
      * @param object $course The course whose description we want
+     * @param object $config Setting from Leeloo
      * @return string
      */
-    public function course_description($course) {
+    public function course_description($course, $config) {
         $course = new core_course_list_element($course);
+
+        $limit = $config->available_summary_limit;
+        if ($limit == '') {
+            $limit = 200;
+        }
 
         $context = \context_course::instance($course->id);
         $summary = external_format_string($course->summary, $context,
             1, array());
-        return html_writer::div($summary, 'course_description');
+        return html_writer::div(substr(strip_tags($summary), 0, $limit).'...', 'course_description');
     }
 
     /**

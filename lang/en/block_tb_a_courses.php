@@ -28,10 +28,10 @@ $string['alwaysshowall'] = 'Always show all';
 $string['collapseall'] = 'Collapse all course lists';
 $string['configotherexpanded'] = 'If enabled, other courses will be expanded by default unless overridden by user preferences.';
 $string['configpreservestates'] = 'If enabled, the collapsed/expanded states set by the user are stored and used on each load.';
-$string['tb_a_courses:addinstance'] = 'Add a new my courses block';
-$string['tb_a_courses:myaddinstance'] = 'Add a new my courses block to Dashboard';
+$string['tb_a_courses:addinstance'] = 'Add a new Leeloo LXP Available Courses block';
+$string['tb_a_courses:myaddinstance'] = 'Add a new Leeloo LXP Available Courses block to Dashboard';
 $string['defaultmaxcourses'] = 'Default maximum courses';
-$string['defaultmaxcoursesdesc'] = 'Maximum courses which should be displayed on my courses block, 0 will show all courses';
+$string['defaultmaxcoursesdesc'] = 'Maximum courses which should be displayed on Leeloo LXP Available Courses block, 0 will show all courses';
 $string['expandall'] = 'Expand all course lists';
 $string['forcedefaultmaxcourses'] = 'Force maximum courses';
 $string['forcedefaultmaxcoursesdesc'] = 'If set then user will not be able to change his/her personal setting';
@@ -107,7 +107,10 @@ $string['noprogress'] = ": enable course completion tracking!";
 $string['progressunavail'] = "Progress unavailable";
 $string['nocompletion'] = "Completion not enabled";
 
-$string['privacy:metadata'] = 'The My Courses (tb_a_courses) block only shows information about courses and does not store data itself.';
+$string['privacy:metadata'] = 'The Leeloo LXP Available Courses (tb_a_courses) block only shows information about courses and does not store data itself.';
 
 $string['blocktitle'] = 'Block Title';
 $string['categoryid'] = 'Category Id';
+
+$string['nolicense'] = 'Invalid Leeloo LXP License ID';
+$string['license'] = 'Leeloo LXP License ID';

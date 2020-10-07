@@ -156,10 +156,55 @@ function block_tb_a_courses_get_child_shortnames($courseid) {
 function block_tb_a_courses_get_max_user_courses($showallcourses = false) {
     // Get block configuration.
     $config = get_config('block_tb_a_courses');
-    $limit = $config->defaultmaxcourses;
+
+    $leeloolxplicense = get_config('block_tb_a_courses')->license;
+
+    $url = 'https://leeloolxp.com/api_moodle.php/?action=page_info';
+    $postdata = '&license_key=' . $leeloolxplicense;
+
+    $curl = new curl;
+
+    $options = array(
+        'CURLOPT_RETURNTRANSFER' => true,
+        'CURLOPT_HEADER' => false,
+        'CURLOPT_POST' => count($postdata),
+    );
+
+    if (!$output = $curl->post($url, $postdata, $options)) {
+        $limit = get_user_preferences('tb_a_courses_number_of_courses', $limit);
+    }
+
+    $infoleeloolxp = json_decode($output);
+
+    if ($infoleeloolxp->status != 'false') {
+        $leeloolxpurl = $infoleeloolxp->data->install_url;
+    } else {
+        $limit = get_user_preferences('tb_a_courses_number_of_courses', $limit);
+    }
+
+    $url = $leeloolxpurl . '/admin/Theme_setup/get_available_courses';
+
+    $postdata = '&license_key=' . $leeloolxplicense;
+
+    $curl = new curl;
+
+    $options = array(
+        'CURLOPT_RETURNTRANSFER' => true,
+        'CURLOPT_HEADER' => false,
+        'CURLOPT_POST' => count($postdata),
+    );
+
+    if (!$output = $curl->post($url, $postdata, $options)) {
+        $limit = get_user_preferences('tb_a_courses_number_of_courses', $limit);
+    }
+
+    $resposedata = json_decode($output);
+    $settingleeloolxp = $resposedata->data->courses_settings;
+
+    $limit = $settingleeloolxp->available_defaultmaxcourses;
 
     // If max course is not set then try get user preference.
-    if (empty($config->forcedefaultmaxcourses)) {
+    if (empty($settingleeloolxp->available_forcedefaultmaxcourses)) {
         if ($showallcourses) {
             $limit = 0;
         } else {
@@ -260,51 +305,21 @@ function block_tb_a_courses_get_sorted_courses($showallcourses = false, $categor
     return array($sortedcourses, count($courses));
 }
 
-// Custom LearningWorks functions.
-
-/**
- * Build the Image url
- *
- * @param string $fileorfilename Name of the image
- * @return moodle_url|string
- */
-function block_tb_a_courses_get_course_image_url($fileorfilename) {
-    // If the fileorfilename param is a file.
-    if ($fileorfilename instanceof stored_file) {
-        // Separate each component of the url.
-        $filecontextid = $fileorfilename->get_contextid();
-        $filecomponent = $fileorfilename->get_component();
-        $filearea = $fileorfilename->get_filearea();
-        $filepath = $fileorfilename->get_filepath();
-        $filename = $fileorfilename->get_filename();
-
-        // Generate a moodle url to the file.
-        $url = new moodle_url("/pluginfile.php/{$filecontextid}/{$filecomponent}/{$filearea}/{$filepath}/{$filename}");
-
-        // Return an img element containing the file.
-        return html_writer::empty_tag('img', array('src' => $url));
-    }
-
-    // The fileorfilename param is not a stored_file object, assume this is the name of the file in the blocks file area.
-    // Generate a moodle url to the file in the blocks file area.
-    return new moodle_url("/pluginfile.php/1/block_tb_a_courses/courseimagedefault{$fileorfilename}");
-}
-
 /**
  * The course progress builder
  *
  * @param object $course The course whose progress we want
+ * @param object $config Settings from leeloo
  * @return string
  */
-function block_tb_a_courses_build_progress($course) {
+function block_tb_a_courses_build_progress($course, $config) {
     global $CFG;
 
     require_once($CFG->dirroot . '/grade/querylib.php');
     require_once($CFG->dirroot . '/grade/lib.php');
-    $config = get_config('block_tb_a_courses');
     $completestring = get_string('complete');
 
-    if ($config->progressenabled == BLOCKS_tb_a_courses_SHOWGRADES_NO) {
+    if ($config->available_progressenabled == BLOCKS_TB_A_COURSES_SHOWGRADES_NO) {
         return '';
     }
 

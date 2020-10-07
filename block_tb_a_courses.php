@@ -64,21 +64,63 @@ class block_tb_a_courses extends block_base {
             return $this->content;
         }
 
-        $config = get_config('block_tb_a_courses');
+        require_once($CFG->libdir . '/filelib.php');
 
-        if (empty($this->config)) {
-            $this->config = new stdClass();
+        $leeloolxplicense = get_config('block_tb_a_courses')->license;
+
+        $url = 'https://leeloolxp.com/api_moodle.php/?action=page_info';
+        $postdata = '&license_key=' . $leeloolxplicense;
+
+        $curl = new curl;
+
+        $options = array(
+            'CURLOPT_RETURNTRANSFER' => true,
+            'CURLOPT_HEADER' => false,
+            'CURLOPT_POST' => count($postdata),
+        );
+
+        if (!$output = $curl->post($url, $postdata, $options)) {
+            $this->content->text = get_string('nolicense', 'block_tb_a_courses');
+            return $this->content;
         }
 
-        if (empty($this->config->title)) {
-            $this->config->title = get_string('displayname', 'block_tb_a_courses');
+        $infoleeloolxp = json_decode($output);
+
+        if ($infoleeloolxp->status != 'false') {
+            $leeloolxpurl = $infoleeloolxp->data->install_url;
+        } else {
+            $this->content->text = get_string('nolicense', 'block_tb_a_courses');
+            return $this->content;
         }
 
-        if (empty($this->config->categoryid)) {
-            $this->config->categoryid = 0;
+        $url = $leeloolxpurl . '/admin/Theme_setup/get_available_courses';
+
+        $postdata = '&license_key=' . $leeloolxplicense;
+
+        $curl = new curl;
+
+        $options = array(
+            'CURLOPT_RETURNTRANSFER' => true,
+            'CURLOPT_HEADER' => false,
+            'CURLOPT_POST' => count($postdata),
+        );
+
+        if (!$output = $curl->post($url, $postdata, $options)) {
+            $this->content->text = get_string('nolicense', 'block_tb_a_courses');
+            return $this->content;
         }
 
-        $this->title = $this->config->title;
+        $resposedata = json_decode($output);
+        $settingleeloolxp = $resposedata->data->courses_settings;
+
+        if (empty($settingleeloolxp->available_course_title)) {
+            $settingleeloolxp->available_course_title = get_string('displayname', 'block_tb_a_courses');
+        }
+        $this->title = $settingleeloolxp->available_course_title;
+
+        if (empty($settingleeloolxp->available_course_cat_id)) {
+            $settingleeloolxp->available_course_cat_id = 0;
+        }
 
         $this->content = new stdClass();
         $this->content->text = '';
@@ -92,17 +134,17 @@ class block_tb_a_courses extends block_base {
         profile_load_custom_fields($USER);
 
         $showallcourses = ($updatemynumber === self::SHOW_ALL_COURSES);
-        list($sortedcourses, $totalcourses) = block_tb_a_courses_get_sorted_courses($showallcourses, $this->config->categoryid);
+        list($sortedcourses, $totalcourses) = block_tb_a_courses_get_sorted_courses($showallcourses, $settingleeloolxp->available_course_cat_id);
 
         $renderer = $this->page->get_renderer('block_tb_a_courses');
-        if (!empty($config->showwelcomearea)) {
+        if (!empty($config->available_showwelcomearea)) {
             require_once($CFG->dirroot . '/message/lib.php');
             $msgcount = message_count_unread_messages();
             $this->content->text = $renderer->welcome_area($msgcount);
         }
 
         // Number of sites to display.
-        if ($this->page->user_is_editing() && empty($config->forcedefaultmaxcourses)) {
+        if ($this->page->user_is_editing() && empty($config->available_forcedefaultmaxcourses)) {
             $this->content->text .= $renderer->editing_bar_head($totalcourses);
         }
 
@@ -116,7 +158,7 @@ class block_tb_a_courses extends block_base {
             $this->content->text .= get_string('nocourses', 'my');
         } else {
             // For each course, build category cache.
-            $this->content->text .= $renderer->tb_a_courses($sortedcourses);
+            $this->content->text .= $renderer->tb_a_courses($sortedcourses, $settingleeloolxp);
         }
 
         return $this->content;
@@ -138,16 +180,5 @@ class block_tb_a_courses extends block_base {
      */
     public function applicable_formats() {
         return array('all' => true);
-    }
-
-    /**
-     * Sets block header to be hidden or visible
-     *
-     * @return bool if true then header will be visible.
-     */
-    public function hide_header() {
-        // Hide header if welcome area is show.
-        $config = get_config('block_tb_a_courses');
-        return !empty($config->showwelcomearea);
     }
 }

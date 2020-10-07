@@ -452,6 +452,7 @@ class block_tb_a_courses_renderer extends plugin_renderer_base {
     /**
      * There was no image for a course give a default
      *
+     * @param object $config Setting from Leeloo
      * @return string|void
      */
     public function course_image_defaults($config) {
